@@ -530,13 +530,13 @@ useEffect(() => {
   Lagre
 </button>
             </div>
-            {dailyMessagesCount >= 3 ? (
+            {dailyMessagesCount >= 50 ? (
               <p className={`text-sm text-yellow-500 mt-1 ${theme === 'ninjamodus' ? 'text-yellow-300' : ''}`}>
-                Du har nådd dagskvoten på 3 meldinger. Prøv igjen i morgen! 😎
+                Du har nådd dagskvoten på 50 meldinger. Prøv igjen i morgen! 😎
               </p>
             ) : (
               <p className={`text-sm ${theme === 'ninjamodus' ? 'text-blue-300' : 'text-blue-500'} mt-1`}>
-                Du har skrevet {dailyMessagesCount}/3 meldinger tillatt i dag 😎
+                Du har skrevet {dailyMessagesCount}/50 meldinger tillatt i dag 😎
               </p>
             )}
           </div>
