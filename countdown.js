@@ -1,5 +1,4 @@
 const { useState, useEffect } = React;
-
 // Initialiser Supabase klient
 const supabaseUrl = 'https://lzsmdpziaanmixumdxjh.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6c21kcHppYWFubWl4dW1keGpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMDQzODYsImV4cCI6MjA1Njc4MDM4Nn0.vNa-Fp6cmPNl02gOxhGa_Aq5DDM6T4E1lO1_8Us4xb8';
@@ -166,17 +165,57 @@ const JapanCountdown = () => {
     return () => clearInterval(animationFrame);
   }, []);
 
-  // Load saved message log from localStorage on initial render
-  useEffect(() => {
+// Load saved message log from Supabase on initial render
+useEffect(() => {
+  const loadMessages = async () => {
     try {
-      const savedLog = localStorage.getItem('japanTripMessageLog');
-      if (savedLog) {
-        setMessageLog(JSON.parse(savedLog));
+      // Hent meldinger fra Supabase
+      const { data, error } = await supabaseClient
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) {
+        console.error('Error loading messages:', error);
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        setMessageLog(data);
+        
+        // Sjekk antall meldinger fra dagens bruker
+        const today = new Date().toLocaleDateString();
+        const userId = getUserId();
+        const todaysMessages = data.filter(entry => 
+          entry.date === today && entry.user_id === userId
+        );
+        setDailyMessagesCount(todaysMessages.length);
       }
     } catch (e) {
-      console.error('Error loading message log from localStorage', e);
+      console.error('Error loading message log:', e);
+      // Fallback til localStorage hvis Supabase feiler
+      try {
+        const savedLog = localStorage.getItem('japanTripMessageLog');
+        if (savedLog) {
+          const parsedLog = JSON.parse(savedLog);
+          setMessageLog(parsedLog);
+          
+          const today = new Date().toLocaleDateString();
+          const userId = getUserId();
+          const todaysMessages = parsedLog.filter(entry => 
+            entry.date === today && entry.user_id === userId
+          );
+          setDailyMessagesCount(todaysMessages.length);
+        }
+      } catch (e) {
+        console.error('Error loading from localStorage:', e);
+      }
     }
-  }, []);
+  };
+
+  loadMessages();
+}, []);
 
   useEffect(() => {
     const calculateCountdown = () => {
@@ -427,37 +466,37 @@ const JapanCountdown = () => {
                 onChange={(e) => setCustomMessage(e.target.value)}
                 className={`px-3 py-2 border rounded flex-grow ${theme === 'ninjamodus' ? 'bg-gray-700 text-white border-gray-600' : 'bg-white'}`}
               />
-              <button 
-                onClick={() => {
-                  if (customMessage.trim()) {
-                    const today = new Date().toLocaleDateString();
-                    const newEntry = {
-                      message: customMessage,
-                      date: today,
-                      timestamp: new Date().toISOString()
-                    };
-                    setMessageLog(prev => [newEntry, ...prev.slice(0, 19)]); // Keep only last 20 entries
-                    setCustomMessage('');
-                    setDailyMessagesCount(prev => prev + 1);
-                    
-                    // Store in localStorage
-                    try {
-                      const updatedLog = [newEntry, ...(JSON.parse(localStorage.getItem('japanTripMessageLog') || '[]')).slice(0, 19)];
-                      localStorage.setItem('japanTripMessageLog', JSON.stringify(updatedLog));
-                    } catch (e) {
-                      console.error('Could not save to localStorage', e);
-                    }
-                  }
-                }}
-                disabled={dailyMessagesCount >= 3}
-                className={`ml-2 px-4 py-2 rounded ${
-                  dailyMessagesCount >= 3
-                    ? 'bg-gray-300 cursor-not-allowed' 
-                    : `${currentTheme.accent} text-white hover:opacity-90`
-                }`}
-              >
-                Lagre
-              </button>
+<button 
+  onClick={() => {
+    if (customMessage.trim()) {
+      const today = new Date().toLocaleDateString();
+      const newEntry = {
+        message: customMessage,
+        date: today,
+        timestamp: new Date().toISOString()
+      };
+      setMessageLog(prev => [newEntry, ...prev.slice(0, 19)]);
+      setCustomMessage('');
+      setDailyMessagesCount(prev => prev + 1);
+      
+      // Store in localStorage
+      try {
+        const updatedLog = [newEntry, ...(JSON.parse(localStorage.getItem('japanTripMessageLog') || '[]')).slice(0, 19)];
+        localStorage.setItem('japanTripMessageLog', JSON.stringify(updatedLog));
+      } catch (e) {
+        console.error('Could not save to localStorage', e);
+      }
+    }
+  }}
+  disabled={dailyMessagesCount >= 3}
+  className={`ml-2 px-4 py-2 rounded ${
+    dailyMessagesCount >= 3
+      ? 'bg-gray-300 cursor-not-allowed' 
+      : `${currentTheme.accent} text-white hover:opacity-90`
+  }`}
+>
+  Lagre
+</button>
             </div>
             {dailyMessagesCount >= 3 ? (
               <p className={`text-sm text-yellow-500 mt-1 ${theme === 'ninjamodus' ? 'text-yellow-300' : ''}`}>
