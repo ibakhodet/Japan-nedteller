@@ -13,15 +13,6 @@ const getUserId = () => {
   }
   return userId;
 };
-// Generer en unik bruker-ID for denne nettleseren hvis den ikke allerede eksisterer
-const getUserId = () => {
-  let userId = localStorage.getItem('japanTripUserId');
-  if (!userId) {
-    userId = 'user_' + Math.random().toString(36).substring(2, 15);
-    localStorage.setItem('japanTripUserId', userId);
-  }
-  return userId;
-};
 
 const JapanCountdown = () => {
   // Set your Japan trip date here
