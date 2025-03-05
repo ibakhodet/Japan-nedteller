@@ -458,24 +458,65 @@ useEffect(() => {
                 className={`px-3 py-2 border rounded flex-grow ${theme === 'ninjamodus' ? 'bg-gray-700 text-white border-gray-600' : 'bg-white'}`}
               />
 <button 
-  onClick={() => {
+  onClick={async () => {
     if (customMessage.trim()) {
       const today = new Date().toLocaleDateString();
+      const userId = getUserId();
+      
       const newEntry = {
         message: customMessage,
         date: today,
-        timestamp: new Date().toISOString()
+        user_id: userId
       };
-      setMessageLog(prev => [newEntry, ...prev.slice(0, 19)]);
-      setCustomMessage('');
-      setDailyMessagesCount(prev => prev + 1);
       
-      // Store in localStorage
       try {
-        const updatedLog = [newEntry, ...(JSON.parse(localStorage.getItem('japanTripMessageLog') || '[]')).slice(0, 19)];
-        localStorage.setItem('japanTripMessageLog', JSON.stringify(updatedLog));
+        // Lagre til Supabase
+        const { data, error } = await supabaseClient
+          .from('messages')
+          .insert([newEntry])
+          .select();
+        
+        if (error) {
+          console.error('Error saving message:', error);
+          throw error;
+        }
+        
+        // Oppdater lokalt state
+        setMessageLog(prev => [data[0], ...prev.slice(0, 19)]); // Keep only last 20 entries
+        setCustomMessage('');
+        setDailyMessagesCount(prev => prev + 1);
+        
+        // Backup til localStorage
+        try {
+          const existingLog = JSON.parse(localStorage.getItem('japanTripMessageLog') || '[]');
+          const updatedLog = [data[0], ...existingLog.slice(0, 19)];
+          localStorage.setItem('japanTripMessageLog', JSON.stringify(updatedLog));
+        } catch (e) {
+          console.error('Could not save to localStorage', e);
+        }
       } catch (e) {
-        console.error('Could not save to localStorage', e);
+        console.error('Could not save to Supabase', e);
+        
+        // Fallback til localStorage hvis Supabase feiler
+        try {
+          // Legg til en lokal id og timestamp
+          const timestamp = new Date().toISOString();
+          const localEntry = {
+            ...newEntry,
+            id: Date.now().toString(),
+            created_at: timestamp
+          };
+          
+          setMessageLog(prev => [localEntry, ...prev.slice(0, 19)]);
+          setCustomMessage('');
+          setDailyMessagesCount(prev => prev + 1);
+          
+          const existingLog = JSON.parse(localStorage.getItem('japanTripMessageLog') || '[]');
+          const updatedLog = [localEntry, ...existingLog.slice(0, 19)];
+          localStorage.setItem('japanTripMessageLog', JSON.stringify(updatedLog));
+        } catch (e) {
+          console.error('Could not save to localStorage', e);
+        }
       }
     }
   }}
