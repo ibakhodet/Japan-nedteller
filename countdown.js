@@ -1,8 +1,19 @@
-const { useState, useEffect } = React; // Initialiser Supabase klient
-const supabaseUrl = 'https://lzsmdpziaanmixumdxjh.supabase.co'; // Erstatt med din URL
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6c21kcHppYWFubWl4dW1keGpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMDQzODYsImV4cCI6MjA1Njc4MDM4Nn0.vNa-Fp6cmPNl02gOxhGa_Aq5DDM6T4E1lO1_8Us4xb8...'; // Erstatt med din anon nøkkel
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+const { useState, useEffect } = React;
 
+// Initialiser Supabase klient
+const supabaseUrl = 'https://lzsmdpziaanmixumdxjh.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6c21kcHppYWFubWl4dW1keGpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMDQzODYsImV4cCI6MjA1Njc4MDM4Nn0.vNa-Fp6cmPNl02gOxhGa_Aq5DDM6T4E1lO1_8Us4xb8';
+const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+// Generer en unik bruker-ID for denne nettleseren hvis den ikke allerede eksisterer
+const getUserId = () => {
+  let userId = localStorage.getItem('japanTripUserId');
+  if (!userId) {
+    userId = 'user_' + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('japanTripUserId', userId);
+  }
+  return userId;
+};
 // Generer en unik bruker-ID for denne nettleseren hvis den ikke allerede eksisterer
 const getUserId = () => {
   let userId = localStorage.getItem('japanTripUserId');
