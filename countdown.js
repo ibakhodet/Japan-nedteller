@@ -471,4 +471,8 @@ const JapanCountdown = () => {
   );
 };
 
-export default JapanCountdown;
+// Render the component
+ReactDOM.render(
+  <JapanCountdown />,
+  document.getElementById('root')
+);
